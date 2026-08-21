@@ -1,265 +1,316 @@
-import pygame
-import random
-import sys
+# ⚔️ A Lenda dos Quatro Elementos
 
-pygame.init()
+Um RPG 2D simples desenvolvido em **Python com Pygame**, no qual você começa sem equipamentos e precisa derrotar monstros, ganhar experiência e moedas, evoluir seu personagem e comprar equipamentos para enfrentar o chefe final.
 
-WIDTH, HEIGHT = 900, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("RPG 2D - Elemental Quest")
+## 🎮 Sobre o jogo
 
-font = pygame.font.SysFont(None, 24)
+Você começa sua aventura com:
 
-clock = pygame.time.Clock()
+* ❤️ **100 de vida**
+* 💧 **100 de mana**
+* 👊 **Punhos como arma**
+* 🛡️ Defesa inicial básica
+* 💰 Nenhuma moeda
+* ⭐ Nível 1
 
-# =========================
-# ELEMENTOS
-# =========================
-ELEMENTS = ["Fogo", "Agua", "Eletrico", "Planta"]
+No início, você escolhe um dos quatro elementos:
 
-def vantagem(atk, enemy):
-    return (
-        (atk == "Agua" and enemy == "Fogo") or
-        (atk == "Fogo" and enemy == "Planta") or
-        (atk == "Eletrico" and enemy == "Agua") or
-        (atk == "Planta" and enemy == "Eletrico")
-    )
+🔥 **Fogo**
+💧 **Água**
+⚡ **Elétrico**
+🌿 **Planta**
 
-# =========================
-# PLAYER
-# =========================
-class Player:
-    def __init__(self, element):
-        self.max_hp = 100
-        self.hp = 100
-        self.mana = 100
-        self.level = 1
-        self.exp = 0
-        self.gold = 0
-        self.element = element
-        self.weapon = "Punho"
-        self.defense = 5
-        self.attack = 10
-        self.skills = [f"Golpe {element}"]
+Cada elemento possui vantagens e desvantagens contra outro elemento.
 
-    def level_up(self):
-        if self.exp >= 100 and self.level < 5:
-            self.exp = 0
-            self.level += 1
-            self.max_hp += 20
-            self.attack += 5
-            self.defense += 3
-            self.hp = self.max_hp
-            if len(self.skills) < 4:
-                self.skills.append(f"Skill Lv{self.level}")
+## 🔥 Sistema de elementos
 
-# =========================
-# MONSTRO
-# =========================
-class Monster:
-    def __init__(self, player_level, shop_purchases):
-        self.element = random.choice(ELEMENTS)
-        base = 40 + player_level * 15 + shop_purchases * 10
-        self.hp = base
-        self.attack = 10 + player_level * 6 + shop_purchases * 3
-        self.defense = 5 + player_level * 3
-        self.gold = random.randint(15, 40) + shop_purchases * 5
-        self.crit_chance = 10 + shop_purchases * 5
+As fraquezas funcionam assim:
 
-# =========================
-# LOJA
-# =========================
-shop = [
-    {"name": "Espada de Ferro", "atk": 15, "price": 50},
-    {"name": "Cajado Místico", "atk": 20, "price": 80},
-    {"name": "Armadura Leve", "def": 10, "price": 60},
-    {"name": "Armadura Pesada", "def": 20, "price": 120},
-]
+| Elemento atacante | Causa dano extra contra |
+| ----------------- | ----------------------- |
+| 💧 Água           | 🔥 Fogo                 |
+| 🔥 Fogo           | 🌿 Planta               |
+| ⚡ Elétrico        | 💧 Água                 |
+| 🌿 Planta         | ⚡ Elétrico              |
 
-# =========================
-# BOSS
-# =========================
-boss = {
-    "name": "DEVORADOR DO ABISMO",
-    "hp": 400,
-    "attack": 40,
-    "defense": 20
-}
+Quando você ataca um inimigo que possui uma fraqueza ao seu elemento, recebe um bônus aleatório de **15 a 30 de dano**.
 
-# =========================
-# JOGO
-# =========================
-class Game:
-    def __init__(self):
-        self.state = "CHAR"
-        self.player = None
-        self.monster = None
-        self.shop_bought = 0
-        self.village_regen = False
+Nesse caso aparece:
 
-    def spawn_monster(self):
-        self.monster = Monster(self.player.level, self.shop_bought)
+> **CRITICO!**
 
-    def draw_text(self, text, x, y):
-        img = font.render(text, True, (255,255,255))
-        screen.blit(img, (x, y))
+Se você estiver lutando contra um inimigo do **mesmo elemento**, existe a possibilidade de ele criar um escudo elemental que reduz seu dano entre **10% e 20%**.
 
-game = Game()
+## ⚔️ Sistema de combate
 
-# =========================
-# LOOP PRINCIPAL
-# =========================
-while True:
-    screen.fill((0,0,0))
+Os monstros são escolhidos **automaticamente e aleatoriamente**.
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
+Você não pode escolher qual monstro enfrentará.
 
-        if event.type == pygame.KEYDOWN:
+Durante a batalha você pode:
 
-            # =========================
-            # ESCOLHA DE ELEMENTO
-            # =========================
-            if game.state == "CHAR":
-                if event.key == pygame.K_1:
-                    game.player = Player("Fogo")
-                    game.state = "VILLAGE"
-                if event.key == pygame.K_2:
-                    game.player = Player("Agua")
-                    game.state = "VILLAGE"
-                if event.key == pygame.K_3:
-                    game.player = Player("Eletrico")
-                    game.state = "VILLAGE"
-                if event.key == pygame.K_4:
-                    game.player = Player("Planta")
-                    game.state = "VILLAGE"
+* 👊 Atacar fisicamente
+* 🔥 Usar poderes elementais
+* 🏃 Tentar fugir
+* 🏠 Voltar para a vila
 
-            # =========================
-            # VILA
-            # =========================
-            elif game.state == "VILLAGE":
-                if event.key == pygame.K_1:
-                    game.spawn_monster()
-                    game.state = "BATTLE"
-                if event.key == pygame.K_2:
-                    game.state = "SHOP"
-                if event.key == pygame.K_3:
-                    game.village_regen = True
+### Ataque físico
 
-            # =========================
-            # BATALHA
-            # =========================
-            elif game.state == "BATTLE":
-                p = game.player
-                m = game.monster
+O ataque físico:
 
-                if event.key == pygame.K_1:
-                    dmg = p.attack + random.randint(5,15)
-                    if vantagem(p.element, m.element):
-                        dmg += random.randint(15,30)
-                        print("CRITICO")
-                    m.hp -= dmg
+* Não consome mana
+* Utiliza o dano do personagem e equipamento
+* Pode ser usado enquanto você estiver sem mana
 
-                if event.key == pygame.K_2:
-                    cost = random.randint(35,45)
-                    if p.mana >= cost:
-                        p.mana -= cost
-                        dmg = 25 + random.randint(10,20)
-                        if vantagem(p.element, m.element):
-                            dmg += random.randint(15,30)
-                            print("CRITICO")
-                        m.hp -= dmg
+### Ataques elementais
 
-                if event.key == pygame.K_3:
-                    game.state = "VILLAGE"
+Os ataques elementais consomem mana.
 
-                if event.key == pygame.K_4:
-                    game.state = "VILLAGE"
+Cada poder possui um custo de aproximadamente **35 a 45 de mana**.
 
-                # turno monstro
-                if m.hp > 0:
-                    mdmg = m.attack + random.randint(0,10)
-                    if random.randint(1,100) < m.crit_chance:
-                        mdmg *= 2
-                        print("CRITICO MONSTRO")
-                    p.hp -= mdmg
+A mana é recuperada a cada turno em uma quantidade aleatória de **5 a 20**.
 
-                # regen mana
-                p.mana = min(100, p.mana + random.randint(5,20))
+## ✨ Evolução dos poderes
 
-                # morte
-                if p.hp <= 0:
-                    game = Game()
+Os poderes elementais possuem seu próprio sistema de experiência.
 
-                # vitória
-                if m.hp <= 0:
-                    p.gold += m.gold
-                    p.exp += random.randint(10,20)
-                    p.level_up()
-                    game.state = "VILLAGE"
+Ao usar poderes, você recebe entre **10 e 20 XP de poder**.
 
-            # =========================
-            # LOJA
-            # =========================
-            elif game.state == "SHOP":
-                p = game.player
+Os poderes podem chegar até o:
 
-                if event.key == pygame.K_1:
-                    if p.gold >= shop[0]["price"]:
-                        p.gold -= shop[0]["price"]
-                        p.attack += shop[0]["atk"]
-                        game.shop_bought += 1
+**Nível 5**
 
-                if event.key == pygame.K_2:
-                    if p.gold >= shop[1]["price"]:
-                        p.gold -= shop[1]["price"]
-                        p.attack += shop[1]["atk"]
-                        game.shop_bought += 1
+Conforme o poder evolui, novos ataques do mesmo elemento são desbloqueados.
 
-                if event.key == pygame.K_3:
-                    if p.gold >= shop[2]["price"]:
-                        p.gold -= shop[2]["price"]
-                        p.defense += shop[2]["def"]
-                        game.shop_bought += 1
+O personagem pode ter no máximo:
 
-                if event.key == pygame.K_4:
-                    if p.gold >= shop[3]["price"]:
-                        p.gold -= shop[3]["price"]
-                        p.defense += shop[3]["def"]
-                        game.shop_bought += 1
+**4 ataques elementais diferentes.**
 
-                if event.key == pygame.K_0:
-                    game.state = "VILLAGE"
+## 📈 Evolução do personagem
 
-    # =========================
-    # DESENHO
-    # =========================
+Ao derrotar monstros você recebe experiência.
 
-    if game.state == "CHAR":
-        game.draw_text("ESCOLHA ELEMENTO:", 50, 50)
-        game.draw_text("1-Fogo 2-Agua 3-Eletrico 4-Planta", 50, 80)
+Quando sua experiência chega ao valor necessário, você sobe de nível.
 
-    elif game.state == "VILLAGE":
-        p = game.player
-        game.draw_text("VILA:", 50, 50)
-        game.draw_text("1-Lutar 2-Loja 3-Descansar", 50, 80)
-        game.draw_text(f"HP:{p.hp} Mana:{p.mana} Gold:{p.gold}", 50, 120)
+Ao subir de nível:
 
-    elif game.state == "BATTLE":
-        p = game.player
-        m = game.monster
-        game.draw_text("BATALHA!", 50, 50)
-        game.draw_text(f"Monstro HP:{m.hp}", 50, 80)
-        game.draw_text(f"Seu HP:{p.hp} Mana:{p.mana}", 50, 110)
-        game.draw_text("1-Atk 2-Magia 3-Fugir 4-Vila", 50, 140)
+* ❤️ Aumenta a vida máxima
+* 💙 Aumenta a mana máxima
+* ⚔️ Aumenta o dano
+* 🛡️ Aumenta a defesa
+* 🔄 Vida e mana são restauradas
 
-    elif game.state == "SHOP":
-        p = game.player
-        game.draw_text("LOJA:", 50, 50)
-        game.draw_text("1-Espada 2-Cajado 3-Armadura 4-Armadura Pesada 0-Sair", 50, 80)
-        game.draw_text(f"Ouro:{p.gold}", 50, 120)
+## 💰 Moedas
 
-    pygame.display.update()
-    clock.tick(30)
+Cada monstro fornece uma quantidade diferente de moedas.
+
+Monstros mais fortes normalmente dão mais dinheiro.
+
+O dinheiro pode ser utilizado na loja para comprar novos equipamentos.
+
+## 🛒 Loja
+
+A loja é uma parte permanente do jogo.
+
+Você começa usando apenas os **punhos**, mas pode comprar equipamentos conforme ganha moedas.
+
+Exemplos:
+
+* ⚔️ Espada de Ferro
+* 🔮 Cajado Elemental
+* 🛡️ Armadura de Couro
+* ⚔️ Espada do Herói
+* 🛡️ Armadura Elemental
+
+Cada equipamento possui um preço específico.
+
+Você **não pode comprar um item se não tiver moedas suficientes**.
+
+Cada equipamento comprado aumenta os atributos do jogador.
+
+## 👹 Dificuldade progressiva
+
+Os monstros ficam mais fortes conforme você compra equipamentos.
+
+Cada item comprado aumenta a dificuldade dos próximos inimigos.
+
+Isso impede que o jogador fique simplesmente comprando equipamentos e derrotando todos os inimigos facilmente.
+
+A chance de monstros realizarem ataques críticos também aumenta conforme a dificuldade.
+
+## 🏘️ Vila
+
+A vila funciona como área segura.
+
+Nela você pode:
+
+* 🛒 Acessar a loja
+* ⚔️ Procurar um novo monstro
+* 📜 Ver suas missões
+* ❤️ Recuperar vida
+* 💙 Recuperar mana
+
+Ao permanecer na vila, você recupera:
+
+**+10 de vida por segundo**
+
+**+10 de mana por segundo**
+
+## 📜 Missões
+
+O jogo possui um sistema básico de missões.
+
+### Missão 1 — Derrote 3 monstros
+
+Objetivo:
+
+`0/3`
+
+Recompensa:
+
+**100 moedas**
+
+### Missão 2 — Junte 300 moedas
+
+Objetivo:
+
+`0/300`
+
+A quantidade é atualizada conforme você consegue moedas durante as batalhas.
+
+## 🏃 Fugir
+
+Durante uma batalha existe a opção de tentar fugir.
+
+A fuga possui uma chance de sucesso.
+
+Se conseguir:
+
+> **Você conseguiu fugir!**
+
+Se falhar, o monstro terá a oportunidade de atacar.
+
+## ☠️ Morte
+
+Se sua vida chegar a zero:
+
+> **VOCÊ MORREU!**
+
+Todo o progresso da partida é perdido.
+
+Você precisa começar novamente desde o início.
+
+## 👑 Chefe final
+
+Depois de comprar **todos os equipamentos da loja**, o chefe final é desbloqueado.
+
+### Astaroth, o Guardião do Vazio
+
+Astaroth é um inimigo muito mais poderoso que os monstros normais.
+
+Ele possui:
+
+* ❤️ Grande quantidade de vida
+* ⚔️ Alto dano
+* 🛡️ Defesa elevada
+* 💥 Possibilidade de ataques críticos
+* 🌈 Um elemento escolhido durante a batalha
+
+Derrotar Astaroth encerra a aventura.
+
+## 🕹️ Controles
+
+| Tecla | Ação                           |
+| ----- | ------------------------------ |
+| `1`   | Ataque físico                  |
+| `2`   | Primeiro poder elemental       |
+| `3`   | Fugir                          |
+| `4`   | Voltar para a vila             |
+| `5`   | Segundo poder                  |
+| `6`   | Terceiro poder                 |
+| `7`   | Quarto poder                   |
+| `E`   | Abrir loja                     |
+| `L`   | Procurar monstro               |
+| `V`   | Descansar                      |
+| `M`   | Missões                        |
+| `ESC` | Voltar                         |
+| `R`   | Reiniciar após derrota/vitória |
+
+## 💻 Requisitos
+
+* Python **3.9 ou superior**
+* Pygame
+
+## 📦 Instalação
+
+Clone o repositório:
+
+```bash
+git clone SEU_LINK_DO_REPOSITORIO
+cd SEU_REPOSITORIO
+```
+
+Instale o Pygame:
+
+```bash
+pip install pygame
+```
+
+Execute o jogo:
+
+```bash
+python rpg.py
+```
+
+## 📁 Estrutura
+
+```text
+A-Lenda-dos-Quatro-Elementos/
+│
+├── rpg.py
+├── README.md
+└── .gitignore
+```
+
+## 🛠️ Tecnologias
+
+* 🐍 Python
+* 🎮 Pygame
+* 🖥️ Gráficos 2D simples
+* ⚔️ Sistema de combate por turnos
+* 📈 Sistema de experiência e níveis
+* 🛒 Sistema de loja
+* ✨ Sistema elemental
+* 📜 Sistema de missões
+
+## 🚀 Possíveis melhorias futuras
+
+Algumas ideias para futuras versões:
+
+* 🎨 Sprites 2D mais detalhados
+* 🗺️ Mapa explorável
+* 🎵 Música e efeitos sonoros
+* 🧙 NPCs
+* 💾 Sistema de salvamento
+* 🏆 Mais chefes
+* 👾 Mais monstros
+* ⚔️ Mais armas
+* 🛡️ Mais armaduras
+* 🔮 Mais poderes
+* 📜 Mais missões
+* 🌎 Novas áreas
+* 🧪 Poções e consumíveis
+* 💎 Itens raros
+* 🎲 Sistema de raridade dos equipamentos
+
+## 📜 Licença
+
+Este projeto pode ser utilizado, estudado e modificado livremente para fins de aprendizado e desenvolvimento pessoal.
+
+---
+
+# ⭐ Aventure-se pelos quatro elementos!
+
+**Escolha seu elemento. Derrote monstros. Evolua. Compre equipamentos. Enfrente Astaroth.**
+
+🔥 💧 ⚡ 🌿
