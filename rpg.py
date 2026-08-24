@@ -616,7 +616,6 @@ class Game:
         damage = max(1, attack_power - self.current_defense() // 3)
         self.hp = max(0, self.hp - damage)
         self.floating.append(FloatingText(390, 310, f"-{damage}", RED, 32, 1.0))
-        self.spawn_attack_particles(element.lower(), enemy=True)
         self.anim_kind = "enemy_" + element
         self.anim_timer = 0.75
         self.shake = 6
