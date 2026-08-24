@@ -1,28 +1,4 @@
-name: Criar executável
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - run: pip install pygame pyinstaller
-
-      - run: pyinstaller --onefile --windowed aetheria_rpg.py --name Aetheria
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Aetheria-EXE
+ name: Aetheria-EXE
           path: dist/Aetheria.exe      - run: pip install pygame pyinstaller
 
       - run: pyinstaller --onefile --windowed aetheria_rpg.py --name Aetheria
@@ -58,4 +34,3 @@ jobs:
           path: dist/Aetheria.exe,0,W,H), 3)
 
     pygame.display.flip()
-
